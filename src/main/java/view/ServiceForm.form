@@ -39,10 +39,18 @@
               </Group>
               <EmptySpace pref="49" max="32767" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="strategyComboBox" min="-2" pref="140" max="-2" attributes="0"/>
-                  <Component id="jLabel1" min="-2" pref="111" max="-2" attributes="0"/>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="strategyComboBox" min="-2" pref="140" max="-2" attributes="0"/>
+                          <Component id="jLabel1" min="-2" pref="111" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="-2" pref="30" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Component id="resetDbButton" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="62" max="-2" attributes="0"/>
+                  </Group>
               </Group>
-              <EmptySpace min="-2" pref="30" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -64,13 +72,17 @@
                   </Group>
               </Group>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="scrollPane1" max="32767" attributes="0"/>
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <Component id="scrollPane1" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
                       <Component id="strategyComboBox" min="-2" pref="32" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="154" max="32767" attributes="0"/>
+                      <EmptySpace pref="82" max="32767" attributes="0"/>
+                      <Component id="resetDbButton" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="59" max="-2" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -130,6 +142,14 @@
       <Properties>
         <Property name="text" type="java.lang.String" value="&#x412;&#x44b;&#x431;&#x435;&#x440;&#x438;&#x442;&#x435; &#x444;&#x43e;&#x440;&#x43c;&#x430;&#x442;:"/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="resetDbButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="&#x41e;&#x447;&#x438;&#x441;&#x442;&#x438;&#x442;&#x44c; &#x411;&#x414;"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="resetDbButtonActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

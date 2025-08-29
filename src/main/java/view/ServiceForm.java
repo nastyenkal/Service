@@ -8,6 +8,7 @@ import factory.UserFactory;
 import java.util.ArrayList;
 import java.util.List;
 import mephi.b23902.service.YamlService;
+import model.DatabaseManager;
 import model.User;
 import model.UserType;
 import observer.Publisher;
@@ -22,16 +23,20 @@ public class ServiceForm extends javax.swing.JFrame {
     //private UserFactory userFactory;
     private Publisher premiumUserPublisher;
     private List<User> currentSessionUsers;
+    private final DatabaseManager dbManager;
+    private int currentSessionId;
 
     /**
      * Creates new form ServiceForm
      */
-    public ServiceForm() {
+    public ServiceForm(DatabaseManager dbManager, int sessionId) {
         initComponents();
 
         //this.userFactory = new UserFactory();
         this.premiumUserPublisher = new Publisher();
         this.currentSessionUsers = new ArrayList<>();
+        this.dbManager = dbManager;
+        this.currentSessionId = sessionId;
     }
 
     /**
@@ -50,6 +55,7 @@ public class ServiceForm extends javax.swing.JFrame {
         userDisplayArea = new javax.swing.JTextArea();
         strategyComboBox = new javax.swing.JComboBox<>();
         jLabel1 = new javax.swing.JLabel();
+        resetDbButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -82,6 +88,13 @@ public class ServiceForm extends javax.swing.JFrame {
 
         jLabel1.setText("Выберите формат:");
 
+        resetDbButton.setText("Очистить БД");
+        resetDbButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                resetDbButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -98,9 +111,14 @@ public class ServiceForm extends javax.swing.JFrame {
                             .addComponent(createUserButton, javax.swing.GroupLayout.DEFAULT_SIZE, 272, Short.MAX_VALUE))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 49, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(strategyComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(30, 30, 30))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(strategyComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(30, 30, 30))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(resetDbButton)
+                        .addGap(62, 62, 62))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -117,11 +135,14 @@ public class ServiceForm extends javax.swing.JFrame {
                         .addComponent(jLabel1)
                         .addGap(20, 20, 20)))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(scrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(scrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(strategyComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 154, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 82, Short.MAX_VALUE)
+                        .addComponent(resetDbButton)
+                        .addGap(59, 59, 59))))
         );
 
         pack();
@@ -129,22 +150,19 @@ public class ServiceForm extends javax.swing.JFrame {
 
     private void createUserButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createUserButtonActionPerformed
         premiumUserPublisher.notifySubscribers();
-        
         currentSessionUsers.clear();
         userDisplayArea.setText("");
-        
+
         YamlService yamlService = new YamlService();
-        UserFactory userFactory = new UserFactory(yamlService);
+        UserFactory userFactory = new UserFactory(yamlService, dbManager, currentSessionId);
 
         List<User> newUsers = userFactory.createUsers();
         currentSessionUsers.addAll(newUsers);
 
         for (User user : currentSessionUsers) {
             userDisplayArea.append(user.toString() + "\n");
-
             if (user.getUserType() == UserType.PREMIUM) {
                 final Subscriber[] subscriberHolder = new Subscriber[1];
-
                 Subscriber premiumSubscriber = () -> {
                     int selectedIndex = strategyComboBox.getSelectedIndex();
                     DisplayStrategy strategy;
@@ -159,11 +177,11 @@ public class ServiceForm extends javax.swing.JFrame {
                     userDisplayArea.append(formattedUser + "\n");
                     premiumUserPublisher.unsubscribe(subscriberHolder[0]);
                 };
-
                 subscriberHolder[0] = premiumSubscriber;
                 premiumUserPublisher.subscribe(premiumSubscriber);
             }
         }
+        userDisplayArea.append("\nПользователи созданы и сохранены в БД!\n");
 
 //        for (int i = 0; i < 5; i++) {
 //            User user = UserFactory.createUser();
@@ -205,45 +223,53 @@ public class ServiceForm extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_strategyComboBoxActionPerformed
 
+    private void resetDbButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resetDbButtonActionPerformed
+        dbManager.resetDatabase();
+        userDisplayArea.setText("База данных была очищена.");
+        currentSessionUsers.clear();
+        premiumUserPublisher.notifySubscribers();
+    }//GEN-LAST:event_resetDbButtonActionPerformed
+
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(ServiceForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(ServiceForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(ServiceForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(ServiceForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new ServiceForm().setVisible(true);
-            }
-        });
-    }
+//    public static void main(String args[]) {
+//        /* Set the Nimbus look and feel */
+//        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+//        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+//         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+//         */
+//        try {
+//            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+//                if ("Nimbus".equals(info.getName())) {
+//                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+//                    break;
+//                }
+//            }
+//        } catch (ClassNotFoundException ex) {
+//            java.util.logging.Logger.getLogger(ServiceForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (InstantiationException ex) {
+//            java.util.logging.Logger.getLogger(ServiceForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (IllegalAccessException ex) {
+//            java.util.logging.Logger.getLogger(ServiceForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+//            java.util.logging.Logger.getLogger(ServiceForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+//        }
+//        //</editor-fold>
+//
+//        /* Create and display the form */
+//        java.awt.EventQueue.invokeLater(new Runnable() {
+//            public void run() {
+//                new ServiceForm().setVisible(true);
+//            }
+//        });
+//    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton createUserButton;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JButton resetDbButton;
     private java.awt.ScrollPane scrollPane1;
     private javax.swing.JButton showPremiumButton;
     private javax.swing.JComboBox<String> strategyComboBox;

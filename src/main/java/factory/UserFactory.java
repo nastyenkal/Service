@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import mephi.b23902.service.YamlService;
+import model.DatabaseManager;
 import model.User;
 import model.UserType;
 
@@ -14,9 +15,13 @@ public class UserFactory {
     private final Faker faker = new Faker();
     private final Random random = new Random();
     private final YamlService yamlService;
+    private final DatabaseManager dbManager;
+    private final int currentSessionId; 
 
-    public UserFactory(YamlService yamlService) {
+    public UserFactory(YamlService yamlService, DatabaseManager dbManager, int sessionId) {
         this.yamlService = yamlService;
+        this.dbManager = dbManager;
+        this.currentSessionId = sessionId;
     }
 
     public List<User> createUsers() {
@@ -26,12 +31,16 @@ public class UserFactory {
         
         int usersToTakeFromYaml = Math.min(usersFromYaml.size(), 3);
         for (int i = 0; i < usersToTakeFromYaml; i++) {
-            finalUserList.add(usersFromYaml.get(i));
+            User user = usersFromYaml.get(i);
+            finalUserList.add(user);
+            dbManager.addUser(user, currentSessionId, "YAML");
         }
 
         int usersToGenerateWithFaker = 5 - usersToTakeFromYaml;
         for (int i = 0; i < usersToGenerateWithFaker; i++) {
-            finalUserList.add(createSingleUserWithFaker());
+            User user = createSingleUserWithFaker();
+            finalUserList.add(user);
+            dbManager.addUser(user, currentSessionId, "FAKER");
         }
 
         return finalUserList;
