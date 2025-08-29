@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package view;
 
 import Strategy.DetailedDisplayStrategy;
@@ -11,6 +7,7 @@ import Strategy.SimpleDisplayStrategy;
 import factory.UserFactory;
 import java.util.ArrayList;
 import java.util.List;
+import mephi.b23902.service.YamlService;
 import model.User;
 import model.UserType;
 import observer.Publisher;
@@ -22,7 +19,7 @@ import observer.Subscriber;
  */
 public class ServiceForm extends javax.swing.JFrame {
 
-    private UserFactory userFactory;
+    //private UserFactory userFactory;
     private Publisher premiumUserPublisher;
     private List<User> currentSessionUsers;
 
@@ -32,12 +29,9 @@ public class ServiceForm extends javax.swing.JFrame {
     public ServiceForm() {
         initComponents();
 
-        this.userFactory = new UserFactory();
+        //this.userFactory = new UserFactory();
         this.premiumUserPublisher = new Publisher();
         this.currentSessionUsers = new ArrayList<>();
-//        strategyComboBox.addItem("Простой формат");
-//        strategyComboBox.addItem("Детальный формат");
-//        strategyComboBox.addItem("JSON формат");
     }
 
     /**
@@ -138,35 +132,67 @@ public class ServiceForm extends javax.swing.JFrame {
         
         currentSessionUsers.clear();
         userDisplayArea.setText("");
+        
+        YamlService yamlService = new YamlService();
+        UserFactory userFactory = new UserFactory(yamlService);
 
-        for (int i = 0; i < 5; i++) {
-            User user = UserFactory.createUser();
-            currentSessionUsers.add(user);
+        List<User> newUsers = userFactory.createUsers();
+        currentSessionUsers.addAll(newUsers);
+
+        for (User user : currentSessionUsers) {
             userDisplayArea.append(user.toString() + "\n");
-            
+
             if (user.getUserType() == UserType.PREMIUM) {
                 final Subscriber[] subscriberHolder = new Subscriber[1];
 
                 Subscriber premiumSubscriber = () -> {
                     int selectedIndex = strategyComboBox.getSelectedIndex();
                     DisplayStrategy strategy;
-                    
-                    if (selectedIndex == 0) {
-                        strategy = new SimpleDisplayStrategy();
-                    } else if (selectedIndex == 1) {
+                    if (selectedIndex == 1) {
                         strategy = new DetailedDisplayStrategy();
-                    } else {
+                    } else if (selectedIndex == 2) {
                         strategy = new JsonDisplayStrategy();
+                    } else {
+                        strategy = new SimpleDisplayStrategy();
                     }
-                    
                     String formattedUser = strategy.format(user);
                     userDisplayArea.append(formattedUser + "\n");
                     premiumUserPublisher.unsubscribe(subscriberHolder[0]);
                 };
+
                 subscriberHolder[0] = premiumSubscriber;
                 premiumUserPublisher.subscribe(premiumSubscriber);
             }
         }
+
+//        for (int i = 0; i < 5; i++) {
+//            User user = UserFactory.createUser();
+//            currentSessionUsers.add(user);
+//            userDisplayArea.append(user.toString() + "\n");
+//            
+//            if (user.getUserType() == UserType.PREMIUM) {
+//                final Subscriber[] subscriberHolder = new Subscriber[1];
+//
+//                Subscriber premiumSubscriber = () -> {
+//                    int selectedIndex = strategyComboBox.getSelectedIndex();
+//                    DisplayStrategy strategy;
+//                    
+//                    if (selectedIndex == 0) {
+//                        strategy = new SimpleDisplayStrategy();
+//                    } else if (selectedIndex == 1) {
+//                        strategy = new DetailedDisplayStrategy();
+//                    } else {
+//                        strategy = new JsonDisplayStrategy();
+//                    }
+//                    
+//                    String formattedUser = strategy.format(user);
+//                    userDisplayArea.append(formattedUser + "\n");
+//                    premiumUserPublisher.unsubscribe(subscriberHolder[0]);
+//                };
+//                subscriberHolder[0] = premiumSubscriber;
+//                premiumUserPublisher.subscribe(premiumSubscriber);
+//            }
+//        }
         userDisplayArea.append("Пользователи созданы!\nВыберите формат вывода PREMIUM пользователей\n");
     }//GEN-LAST:event_createUserButtonActionPerformed
 

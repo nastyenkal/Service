@@ -9,6 +9,7 @@ model\UserType.class
 view\ServiceForm$2.class
 factory\UserFactory.class
 Strategy\DetailedDisplayStrategy.class
+mephi\b23902\service\YamlService.class
 observer\Publisher.class
 view\ServiceForm$1.class
 mephi\b23902\service\Service$1.class
