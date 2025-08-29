@@ -4,6 +4,10 @@
  */
 package view;
 
+import Strategy.DetailedDisplayStrategy;
+import Strategy.DisplayStrategy;
+import Strategy.JsonDisplayStrategy;
+import Strategy.SimpleDisplayStrategy;
 import factory.UserFactory;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +35,9 @@ public class ServiceForm extends javax.swing.JFrame {
         this.userFactory = new UserFactory();
         this.premiumUserPublisher = new Publisher();
         this.currentSessionUsers = new ArrayList<>();
+//        strategyComboBox.addItem("Простой формат");
+//        strategyComboBox.addItem("Детальный формат");
+//        strategyComboBox.addItem("JSON формат");
     }
 
     /**
@@ -47,6 +54,8 @@ public class ServiceForm extends javax.swing.JFrame {
         scrollPane1 = new java.awt.ScrollPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         userDisplayArea = new javax.swing.JTextArea();
+        strategyComboBox = new javax.swing.JComboBox<>();
+        jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -70,38 +79,63 @@ public class ServiceForm extends javax.swing.JFrame {
 
         scrollPane1.add(jScrollPane1);
 
+        strategyComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Простой формат", "Детальный формат", "Json формат"}));
+        strategyComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                strategyComboBoxActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setText("Выберите формат:");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(scrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 372, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(62, 62, 62)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(showPremiumButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(createUserButton, javax.swing.GroupLayout.DEFAULT_SIZE, 272, Short.MAX_VALUE)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(32, 32, 32)
-                        .addComponent(scrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 326, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(42, Short.MAX_VALUE))
+                            .addComponent(createUserButton, javax.swing.GroupLayout.DEFAULT_SIZE, 272, Short.MAX_VALUE))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 49, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(strategyComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(30, 30, 30))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(28, 28, 28)
                 .addComponent(createUserButton, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(showPremiumButton, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(36, 36, 36)
-                .addComponent(scrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(31, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(17, 17, 17)
+                        .addComponent(showPremiumButton, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel1)
+                        .addGap(20, 20, 20)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(scrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(strategyComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 154, Short.MAX_VALUE)))
+                .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void createUserButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createUserButtonActionPerformed
+        premiumUserPublisher.notifySubscribers();
+        
         currentSessionUsers.clear();
         userDisplayArea.setText("");
 
@@ -109,22 +143,41 @@ public class ServiceForm extends javax.swing.JFrame {
             User user = UserFactory.createUser();
             currentSessionUsers.add(user);
             userDisplayArea.append(user.toString() + "\n");
+            
             if (user.getUserType() == UserType.PREMIUM) {
                 final Subscriber[] subscriberHolder = new Subscriber[1];
+
                 Subscriber premiumSubscriber = () -> {
-                    userDisplayArea.append(user.toString() + "\n");
+                    int selectedIndex = strategyComboBox.getSelectedIndex();
+                    DisplayStrategy strategy;
+                    
+                    if (selectedIndex == 0) {
+                        strategy = new SimpleDisplayStrategy();
+                    } else if (selectedIndex == 1) {
+                        strategy = new DetailedDisplayStrategy();
+                    } else {
+                        strategy = new JsonDisplayStrategy();
+                    }
+                    
+                    String formattedUser = strategy.format(user);
+                    userDisplayArea.append(formattedUser + "\n");
                     premiumUserPublisher.unsubscribe(subscriberHolder[0]);
                 };
+                subscriberHolder[0] = premiumSubscriber;
                 premiumUserPublisher.subscribe(premiumSubscriber);
             }
         }
-        userDisplayArea.append("Пользователи созданы!\n");
+        userDisplayArea.append("Пользователи созданы!\nВыберите формат вывода PREMIUM пользователей\n");
     }//GEN-LAST:event_createUserButtonActionPerformed
 
     private void showPremiumButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showPremiumButtonActionPerformed
         userDisplayArea.append("PREMIUM пользователи:\n");
         premiumUserPublisher.notifySubscribers();
     }//GEN-LAST:event_showPremiumButtonActionPerformed
+
+    private void strategyComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_strategyComboBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_strategyComboBoxActionPerformed
 
     /**
      * @param args the command line arguments
@@ -163,9 +216,11 @@ public class ServiceForm extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton createUserButton;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private java.awt.ScrollPane scrollPane1;
     private javax.swing.JButton showPremiumButton;
+    private javax.swing.JComboBox<String> strategyComboBox;
     private javax.swing.JTextArea userDisplayArea;
     // End of variables declaration//GEN-END:variables
 }
